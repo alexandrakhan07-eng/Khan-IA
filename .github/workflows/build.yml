@@ -1,0 +1,60 @@
+name: Compilar APK con Buildozer
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Clonar repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar Java (JDK 17)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Instalar dependencias del sistema
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          python3-pip \
+          python3-dev \
+          git \
+          zip \
+          unzip \
+          autoconf \
+          libtool \
+          pkg-config \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          libffi-dev \
+          libssl-dev
+
+    - name: Instalar Buildozer y Cython
+      run: |
+        pip3 install --upgrade pip
+        pip3 install Cython==0.29.33
+        pip3 install buildozer
+
+    - name: Inyectar llave de Gemini de forma segura
+      run: |
+        # Esto crea el archivo JSON dentro de tu carpeta de proyecto usando el secreto guardado
+        echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
+
+    - name: Compilar APK con Buildozer
+      run: |
+        cd "KHAN IA"
+        buildozer -v android debug
+
+    - name: Subir APK como artefacto
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-debug
+        path: "KHAN IA/bin/*.apk"
