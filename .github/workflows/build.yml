@@ -48,16 +48,16 @@ jobs:
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
-        echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
+        echo '${{ secrets.GEMINI_API_KEY }}' > "KHANIA/llave"
 
-    - name: Inyectar licencias y forzar Build-Tools 37
+    - name: Inyectar licencias y herramientas del SDK
       run: |
         ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
         mkdir -p $ANDROID_HOME/licenses
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
 
-        # Escribir los hashes de licencias oficiales de Android para evitar que rechace la versión 37
+        # Escribir licencias oficiales de Android
         echo "24333f8a43b68257485db91320387e740938173d" > $ANDROID_HOME/licenses/android-sdk-license
         echo "84831b4009046f4a4fbef8215316f4fcb640a850" >> $ANDROID_HOME/licenses/android-sdk-license
         echo "d56f5187479451eabf01fb78af6dfcb131a648fa" >> $ANDROID_HOME/licenses/android-sdk-license
@@ -75,17 +75,18 @@ jobs:
         cp -r temp_tools/cmdline-tools/lib $ANDROID_HOME/tools/
         rm -rf cmdtools.zip temp_tools
 
-        # Instalar explícitamente las herramientas de compilación con la licencia ya inyectada
+        # Instalar componentes requeridos
         export PATH=$PATH:$ANDROID_HOME/tools/bin
-        yes | sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;37.0.0" || true
+        yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
+        sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;31.0.0" "build-tools;37.0.0" || true
 
     - name: Compilar APK con Buildozer
       run: |
-        cd "KHAN IA"
+        cd KHANIA
         buildozer -v android debug
 
     - name: Subir APK como artefacto
       uses: actions/upload-artifact@v4
       with:
         name: app-release-debug
-        path: "KHAN IA/bin/*.apk"
+        path: "KHANIA/bin/*.apk"
