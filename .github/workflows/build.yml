@@ -50,28 +50,34 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
-    - name: Ubicar sdkmanager exactamente donde Buildozer lo exige
+    - name: Inyectar licencias y forzar Build-Tools 37
       run: |
         ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_HOME/tools/bin
+        mkdir -p $ANDROID_HOME/licenses
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
+
+        # Escribir los hashes de licencias oficiales de Android para evitar que rechace la versión 37
+        echo "24333f8a43b68257485db91320387e740938173d" > $ANDROID_HOME/licenses/android-sdk-license
+        echo "84831b4009046f4a4fbef8215316f4fcb640a850" >> $ANDROID_HOME/licenses/android-sdk-license
+        echo "d56f5187479451eabf01fb78af6dfcb131a648fa" >> $ANDROID_HOME/licenses/android-sdk-license
+        echo "2d41b4395567bc7d35399587a8e265215560b734" >> $ANDROID_HOME/licenses/android-sdk-license
+        echo "33fb1f69ff094a97405e3264426569ec983276cd" >> $ANDROID_HOME/licenses/android-sdk-license
+        echo "e66c8cd398e29a997ef2a709088661fc5f03d6d6" >> $ANDROID_HOME/licenses/android-sdk-license
 
         # Descargar herramientas de línea de comandos de Android
         CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
         wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
         mkdir -p temp_tools
         unzip -q cmdtools.zip -d temp_tools
-
-        # Copiar los binarios directamente a la ruta antigua tools/bin que busca Buildozer
+        mkdir -p $ANDROID_HOME/tools/bin
         cp -r temp_tools/cmdline-tools/bin/* $ANDROID_HOME/tools/bin/
         cp -r temp_tools/cmdline-tools/lib $ANDROID_HOME/tools/
         rm -rf cmdtools.zip temp_tools
 
-        # Aceptar licencias e instalar los componentes necesarios (API 31 y build-tools 31.0.0)
+        # Instalar explícitamente las herramientas de compilación con la licencia ya inyectada
         export PATH=$PATH:$ANDROID_HOME/tools/bin
-        yes | sdkmanager --licenses || true
-        sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" || true
+        yes | sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;37.0.0" || true
 
     - name: Compilar APK con Buildozer
       run: |
