@@ -50,34 +50,6 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
-    - name: Inyectar licencias de Android SDK manualmente
-      run: |
-        ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_HOME/licenses
-        mkdir -p $HOME/.android
-        
-        # Escribir los hashes de licencias oficiales de Android para evitar bloqueos
-        echo "84831b4009046f4a4fbef8215316f4fcb640a850" > $ANDROID_HOME/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a648fa" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "24333f8a43b68257485db91320387e740938173d" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "2d41b4395567bc7d35399587a8e265215560b734" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "33fb1f69ff094a97405e3264426569ec983276cd" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "e66c8cd398e29a997ef2a709088661fc5f03d6d6" >> $ANDROID_HOME/licenses/android-sdk-license
-
-        # Descargar herramientas de línea de comandos de Android
-        CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
-        wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
-        mkdir -p temp_tools
-        unzip -q cmdtools.zip -d temp_tools
-        mkdir -p $ANDROID_HOME/tools/bin
-        cp -r temp_tools/cmdline-tools/bin/* $ANDROID_HOME/tools/bin/
-        cp -r temp_tools/cmdline-tools/lib $ANDROID_HOME/tools/
-        rm -rf cmdtools.zip temp_tools
-
-        # Instalar explícitamente build-tools 37 para que el aidl esté disponible
-        export PATH=$PATH:$ANDROID_HOME/tools/bin
-        sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;37.0.0" || true
-
     - name: Compilar APK con Buildozer
       run: |
         cd "KHAN IA"
