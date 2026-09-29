@@ -49,11 +49,14 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
-    - name: Aceptar licencias de Android SDK automáticamente
+    - name: Instalar Android SDK y Herramientas previas
       run: |
+        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $ANDROID_HOME
+        # Usamos ppa o instalador directo de SDK si es necesario, pero le decimos a buildozer que use una versión estable en su spec.
+        # Vamos a aceptar licencias de forma global para que no falle el SDK manager:
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
-        yes | sdkmanager --licenses || true
 
     - name: Compilar APK con Buildozer
       run: |
