@@ -37,7 +37,8 @@ jobs:
           libffi-dev \
           libssl-dev \
           build-essential \
-          libltdl-dev
+          libltdl-dev \
+          ant
 
     - name: Instalar Buildozer y Cython
       run: |
@@ -49,12 +50,10 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
-    - name: Instalar Android SDK y Herramientas previas
+    - name: Preparar entorno Android SDK manualmente
       run: |
-        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_HOME
-        # Usamos ppa o instalador directo de SDK si es necesario, pero le decimos a buildozer que use una versión estable en su spec.
-        # Vamos a aceptar licencias de forma global para que no falle el SDK manager:
+        ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $ANDROID_HOME/tools/bin
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
 
