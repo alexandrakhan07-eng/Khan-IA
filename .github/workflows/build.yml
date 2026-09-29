@@ -19,9 +19,6 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Configurar Android SDK
-      uses: android-actions/setup-android@v3
-
     - name: Instalar dependencias del sistema
       run: |
         sudo apt-get update
@@ -52,6 +49,11 @@ jobs:
     - name: Inyectar llave de Gemini de forma segura
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
+
+    - name: Preparar directorios y licencias de Android
+      run: |
+        mkdir -p $HOME/.android
+        echo '### License policies' > $HOME/.android/repositories.cfg
 
     - name: Compilar APK con Buildozer
       run: |
