@@ -50,10 +50,10 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
-    - name: Instalar SDK y forzar licencia de Build-Tools 37
+    - name: Forzar creación de sdkmanager en la ruta exacta de Buildozer
       run: |
         ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_HOME
+        mkdir -p $ANDROID_HOME/tools/bin
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
         
@@ -62,12 +62,15 @@ jobs:
         wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
         mkdir -p temp_tools
         unzip -q cmdtools.zip -d temp_tools
-        mkdir -p $ANDROID_HOME/cmdline-tools/latest
-        mv temp_tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+        
+        # Copiar de forma directa a tools/bin para que Buildozer lo encuentre al primer intento
+        cp -r temp_tools/cmdline-tools/bin/* $ANDROID_HOME/tools/bin/
+        cp -r temp_tools/cmdline-tools/lib $ANDROID_HOME/tools/
         rm -rf cmdtools.zip temp_tools
 
-        # Configurar PATH y aceptar licencias para la versión 37 que pide tu spec
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        # Dar permisos y aceptar licencias automáticamente
+        chmod +x $ANDROID_HOME/tools/bin/sdkmanager
+        export PATH=$PATH:$ANDROID_HOME/tools/bin
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;37.0.0" || true
 
