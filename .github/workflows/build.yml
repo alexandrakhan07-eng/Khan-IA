@@ -49,6 +49,12 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
+    - name: Aceptar licencias de Android SDK automáticamente
+      run: |
+        mkdir -p $HOME/.android
+        echo '### License policies' > $HOME/.android/repositories.cfg
+        yes | sdkmanager --licenses || true
+
     - name: Compilar APK con Buildozer
       run: |
         cd "KHAN IA"
