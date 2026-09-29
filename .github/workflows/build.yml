@@ -35,7 +35,9 @@ jobs:
           libncurses5-dev \
           libncursesw5-dev \
           libffi-dev \
-          libssl-dev
+          libssl-dev \
+          build-essential \
+          libltdl-dev
 
     - name: Instalar Buildozer y Cython
       run: |
@@ -45,7 +47,6 @@ jobs:
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
-        # Esto crea el archivo JSON dentro de tu carpeta de proyecto usando el secreto guardado
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
     - name: Compilar APK con Buildozer
