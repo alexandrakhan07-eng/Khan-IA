@@ -50,10 +50,26 @@ jobs:
       run: |
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHAN IA/llave"
 
-    - name: Preparar directorios y licencias de Android
+    - name: Configurar y aceptar licencias del SDK de Android
       run: |
+        ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $ANDROID_HOME
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
+        
+        # Descargar command-line tools de Android para permitir la instalación de aidl/build-tools
+        CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
+        wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
+        mkdir -p temp_tools
+        unzip -q cmdtools.zip -d temp_tools
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        mv temp_tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+        rm -rf cmdtools.zip temp_tools
+
+        # Aceptar licencias automáticamente
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" || true
 
     - name: Compilar APK con Buildozer
       run: |
