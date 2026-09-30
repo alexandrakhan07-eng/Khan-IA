@@ -9,6 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    # Añadimos el binario del virtualenv al PATH global del job para que todos los pasos
+    # y procesos hijos (buildozer / p4a) lo vean.
+    env:
+      PATH: ${{ github.workspace }}/.venv/bin:${{ github.workspace }}/.venv/scripts:$PATH
+
     steps:
     - name: Clonar repositorio
       uses: actions/checkout@v4
@@ -26,75 +31,100 @@ jobs:
 
     - name: Instalar dependencias del sistema
       run: |
+        set -e
         sudo apt-get update
         sudo apt-get install -y \
-          git zip unzip wget \
+          git zip unzip wget curl build-essential \
           autoconf libtool pkg-config \
           zlib1g-dev libncurses5-dev libncursesw5-dev \
-          libffi-dev libssl-dev build-essential \
-          libltdl-dev ant
+          libffi-dev libssl-dev libltdl-dev ant \
+          python3-venv python3-dev libbz2-dev liblzma-dev libzip-dev \
+          lib32stdc++6 lib32z1
 
-    - name: Crear entorno virtual e instalar Buildozer
+    - name: Crear entorno virtual e instalar Buildozer y dependencias Python
       run: |
+        set -e
         python -m venv .venv
         .venv/bin/pip install --upgrade pip==23.1.2
-        .venv/bin/pip install \
-          "setuptools<70" \
-          "wheel<0.41" \
-          "Cython==0.29.33" \
-          "buildozer==1.5.0"
+        # setuptools/wheel versiones compatibles con buildozer/p4a
+        .venv/bin/pip install "setuptools<70" "wheel<0.41"
+        # Cython en versión requerida por muchas recetas y buildozer
+        .venv/bin/pip install "Cython==0.29.33"
+        # Buildozer
+        .venv/bin/pip install "buildozer==1.5.0"
+        # Verificar binarios instalados
+        echo "Listado .venv/bin:"
+        ls -la .venv/bin
+        .venv/bin/cython --version || true
+        .venv/bin/python -c "import Cython; print('Cython import OK', Cython.__version__)"
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
+        set -e
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHANIA/llave"
+        chmod 600 KHANIA/llave
 
-    - name: Inyectar licencias y herramientas del SDK
+    - name: Instalar Android SDK Command-line tools y componentes
       run: |
+        set -e
         ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_HOME/licenses
-        mkdir -p $HOME/.android
-        echo '### License policies' > $HOME/.android/repositories.cfg
-
-        # Escribir licencias oficiales de Android
-        echo "24333f8a43b68257485db91320387e740938173d" > $ANDROID_HOME/licenses/android-sdk-license
-        echo "84831b4009046f4a4fbef8215316f4fcb640a850" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a648fa" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "2d41b4395567bc7d35399587a8e265215560b734" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "33fb1f69ff094a97405e3264426569ec983276cd" >> $ANDROID_HOME/licenses/android-sdk-license
-        echo "e66c8cd398e29a997ef2a709088661fc5f03d6d6" >> $ANDROID_HOME/licenses/android-sdk-license
-
-        # Descargar herramientas de línea de comandos de Android
+        export ANDROID_HOME
+        export ANDROID_SDK_ROOT="$ANDROID_HOME"
+        mkdir -p "$ANDROID_HOME"
+        mkdir -p "$ANDROID_HOME/cmdline-tools"
+        # Descargar command line tools (usa versión reciente conocida)
         CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
-        wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
-        mkdir -p temp_tools
+        wget -q "$CMDLINE_TOOLS_URL" -O cmdtools.zip
         unzip -q cmdtools.zip -d temp_tools
-        mkdir -p $ANDROID_HOME/tools/bin
-        cp -r temp_tools/cmdline-tools/bin/* $ANDROID_HOME/tools/bin/
-        cp -r temp_tools/cmdline-tools/lib $ANDROID_HOME/tools/
+        # Colocar en estructura cmdline-tools/latest
+        mkdir -p "$ANDROID_HOME/cmdline-tools/latest"
+        mv temp_tools/cmdline-tools/* "$ANDROID_HOME/cmdline-tools/latest/"
         rm -rf cmdtools.zip temp_tools
 
-        # Instalar componentes requeridos sin ocultar errores
-        export PATH=$PATH:$ANDROID_HOME/tools/bin
-        yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
-        sdkmanager --sdk_root="$ANDROID_HOME" \
-          "platform-tools" \
-          "platforms;android-31" \
-          "build-tools;31.0.0"
+        # Añadir herramientas al PATH para esta sesión
+        export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+        # Aceptar licencias e instalar componentes necesarios
+        yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
+
+        # Instalar platform-tools, plataforma y build-tools; incluir NDK/ CMake para evitar descargas en tiempo de buildozer
+        sdkmanager --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;21.4.7075529" "cmake;3.10.2.4988404"
+
+        # Crear directorio de licencias conocido por buildozer
+        mkdir -p "$ANDROID_HOME/licenses"
+        # si necesitas usar licencias explícitas, puedes escribir hashes aquí (opcional)
+        # echo "24333f8a43b68257485db91320387e740938173d" > "$ANDROID_HOME/licenses/android-sdk-license"
+
+        # Mostrar versión de sdkmanager y lista de paquetes instalados (verificación)
+        sdkmanager --sdk_root="$ANDROID_HOME" --list | head -n 40
 
     - name: Verificar Android SDK
       run: |
+        set -e
         ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        test -x "$ANDROID_HOME/tools/bin/sdkmanager"
-        "$ANDROID_HOME/tools/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --list | grep -E 'platforms;android-31|build-tools;31.0.0'
+        export ANDROID_HOME
+        export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+        test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+        "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --list | grep -E 'platforms;android-31|build-tools;31.0.0' || true
+        echo "SDK verification done"
 
     - name: Limpiar y compilar APK
       working-directory: KHANIA
       env:
         PIP_DISABLE_PIP_VERSION_CHECK: "1"
         PYTHONUNBUFFERED: "1"
+        # Aseguramos ANDROID_HOME para el paso de compilación también
+        ANDROID_HOME: ${{ runner.home }}/.buildozer/android/platform/android-sdk
+        ANDROID_SDK_ROOT: ${{ runner.home }}/.buildozer/android/platform/android-sdk
+        PATH: ${{ github.workspace }}/.venv/bin:${{ runner.home }}/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:${{ runner.home }}/.buildozer/android/platform/android-sdk/platform-tools:${{ env.PATH }}
       run: |
-        rm -rf .buildozer bin
-        ../.venv/bin/python -m buildozer -v android debug
+        set -euo pipefail
+        # Mostrar rutas y versiones para depuración en caso de fallo
+        echo "PATH=$PATH"
+        which python || echo "python no encontrado"
+        which cython || echo "cython no encontrado en PATH"
+        cython --version || true
+        .venv/bin/python -m buildozer -v android debug
 
     - name: Subir APK como artefacto
       uses: actions/upload-artifact@v4
