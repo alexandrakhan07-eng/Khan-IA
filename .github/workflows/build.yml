@@ -27,33 +27,22 @@ jobs:
           python3.10-dev \
           python3.10-venv \
           python3.10-distutils \
-          git \
-          zip \
-          unzip \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev \
-          libncurses5-dev \
-          libncursesw5-dev \
-          libffi-dev \
-          libssl-dev \
-          build-essential \
-          libltdl-dev \
-          ant
-
-        sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-        python3.10 --version
+          git zip unzip \
+          autoconf libtool pkg-config \
+          zlib1g-dev libncurses5-dev libncursesw5-dev \
+          libffi-dev libssl-dev build-essential \
+          libltdl-dev ant
 
     - name: Instalar herramientas compatibles
       run: |
         python3.10 -m ensurepip --upgrade
         python3.10 -m pip install --upgrade "pip==23.1.2"
-        python3.10 -m pip install --no-cache-dir "setuptools<70"
-        python3.10 -m pip install --no-cache-dir "wheel<0.41"
-        python3.10 -m pip install --no-cache-dir "Cython==0.29.33"
-        python3.10 -m pip install --no-cache-dir "buildozer==1.5.0"
-        python3.10 -m pip install --no-cache-dir "python-for-android==2023.5.21"
+        python3.10 -m pip install --no-cache-dir \
+          "setuptools<70" \
+          "wheel<0.41" \
+          "Cython==0.29.33" \
+          "buildozer==1.5.0" \
+          "python-for-android==2023.5.21"
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
@@ -66,6 +55,7 @@ jobs:
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
 
+        # Escribir licencias oficiales de Android
         echo "24333f8a43b68257485db91320387e740938173d" > $ANDROID_HOME/licenses/android-sdk-license
         echo "84831b4009046f4a4fbef8215316f4fcb640a850" >> $ANDROID_HOME/licenses/android-sdk-license
         echo "d56f5187479451eabf01fb78af6dfcb131a648fa" >> $ANDROID_HOME/licenses/android-sdk-license
@@ -73,6 +63,7 @@ jobs:
         echo "33fb1f69ff094a97405e3264426569ec983276cd" >> $ANDROID_HOME/licenses/android-sdk-license
         echo "e66c8cd398e29a997ef2a709088661fc5f03d6d6" >> $ANDROID_HOME/licenses/android-sdk-license
 
+        # Descargar herramientas de línea de comandos de Android
         CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
         wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
         mkdir -p temp_tools
@@ -82,21 +73,19 @@ jobs:
         cp -r temp_tools/cmdline-tools/lib $ANDROID_HOME/tools/
         rm -rf cmdtools.zip temp_tools
 
+        # Instalar componentes requeridos
         export PATH=$PATH:$ANDROID_HOME/tools/bin
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;31.0.0" "build-tools;37.0.0" || true
 
-    - name: Limpiar caché previa de Buildozer y compilar
+    - name: Limpiar y compilar APK
       working-directory: KHANIA
       env:
         PIP_DISABLE_PIP_VERSION_CHECK: "1"
         PYTHONUNBUFFERED: "1"
       run: |
-        rm -rf .buildozer
-        rm -rf bin
-
+        rm -rf .buildozer bin
         python3.10 -c "import sys; print(sys.executable); print(sys.version)"
-        python3.10 -m buildozer android clean || true
         python3.10 -m buildozer -v android debug
 
     - name: Subir APK como artefacto
