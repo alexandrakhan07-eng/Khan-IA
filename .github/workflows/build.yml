@@ -43,11 +43,12 @@ jobs:
           ant
         sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
-    - name: Instalar Buildozer, Cython y Pip compatible
+    - name: Instalar Buildozer, Cython y python-for-android compatible
       run: |
-        python3 -m pip install --upgrade pip==23.2.1
+        python3 -m pip install --upgrade pip
         python3 -m pip install Cython==0.29.33
         python3 -m pip install buildozer
+        python3 -m pip install --upgrade python-for-android
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
