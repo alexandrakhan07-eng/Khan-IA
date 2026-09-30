@@ -43,11 +43,12 @@ jobs:
           ant
         sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
-    - name: Instalar Buildozer, Cython y Pip compatible
+    - name: Instalar Buildozer, Cython y herramientas compatibles
       run: |
         python3 -m pip install --upgrade pip==23.2.1
         python3 -m pip install Cython==0.29.33
         python3 -m pip install buildozer
+        python3 -m pip install python-for-android==2024.9.0
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
@@ -83,9 +84,10 @@ jobs:
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;31.0.0" "build-tools;37.0.0" || true
 
-    - name: Compilar APK con Buildozer
+    - name: Limpiar caché previa de Buildozer y compilar
       run: |
         cd KHANIA
+        python3.10 -m buildozer android clean || true
         python3.10 -m buildozer -v android debug
 
     - name: Subir APK como artefacto
