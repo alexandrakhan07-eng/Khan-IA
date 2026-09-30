@@ -19,14 +19,13 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Instalar dependencias del sistema y Python compatible
+    - name: Instalar dependencias del sistema y Python 3.10
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           python3.10 \
           python3.10-dev \
           python3.10-venv \
-          python3-pip \
           git \
           zip \
           unzip \
@@ -43,12 +42,12 @@ jobs:
           ant
         sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
-    - name: Instalar Buildozer, Cython y Pip compatible
+    - name: Instalar herramientas con versiones compatibles
       run: |
-        python3 -m pip install --upgrade pip==23.3.2
-        python3 -m pip install Cython==0.29.33
-        python3 -m pip install buildozer
-        python3 -m pip install python-for-android
+        python3 -m pip install --no-cache-dir pip==23.0
+        python3 -m pip install --no-cache-dir Cython==0.29.33
+        python3 -m pip install --no-cache-dir buildozer
+        python3 -m pip install --no-cache-dir "python-for-android==2023.05.23"
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
@@ -87,7 +86,6 @@ jobs:
     - name: Limpiar caché previa de Buildozer y compilar
       run: |
         cd KHANIA
-        python3.10 -m pip install --upgrade pip==23.3.2
         python3.10 -m buildozer android clean || true
         python3.10 -m buildozer -v android debug
 
