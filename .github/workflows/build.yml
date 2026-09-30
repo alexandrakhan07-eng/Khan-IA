@@ -68,13 +68,13 @@ jobs:
 
         # Escribir licencias oficiales de Android (cada línea)
         cat > $ANDROID_HOME/licenses/android-sdk-license <<'EOF'
-24333f8a43b68257485db91320387e740938173d
-84831b4009046f4a4fbef8215316f4fcb640a850
-d56f5187479451eabf01fb78af6dfcb131a648fa
-2d41b4395567bc7d35399587a8e265215560b734
-33fb1f69ff094a97405e3264426569ec983276cd
-e66c8cd398e29a997ef2a709088661fc5f03d6d6
-EOF
+        24333f8a43b68257485db91320387e740938173d
+        84831b4009046f4a4fbef8215316f4fcb640a850
+        d56f5187479451eabf01fb78af6dfcb131a648fa
+        2d41b4395567bc7d35399587a8e265215560b734
+        33fb1f69ff094a97405e3264426569ec983276cd
+        e66c8cd398e29a997ef2a709088661fc5f03d6d6
+        EOF
 
         # Descargar herramientas de línea de comandos de Android y descomprimir en layout moderno
         CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
