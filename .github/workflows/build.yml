@@ -83,8 +83,9 @@ jobs:
 
     - name: Verificar Android SDK
       run: |
-        test -x "$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
-        "$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager" --list | grep -E 'platforms;android-31|build-tools;31.0.0'
+        ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        test -x "$ANDROID_HOME/tools/bin/sdkmanager"
+        "$ANDROID_HOME/tools/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --list | grep -E 'platforms;android-31|build-tools;31.0.0'
 
     - name: Limpiar y compilar APK
       working-directory: KHANIA
