@@ -42,14 +42,14 @@ jobs:
         mkdir -p KHANIA
         echo '${{ secrets.GEMINI_API_KEY }}' > "KHANIA/llave"
 
-    - name: Inyectar licencias y herramientas del SDK
+    - name: Instalar herramientas del Android SDK
       run: |
         ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
         mkdir -p $ANDROID_HOME/licenses
         mkdir -p $HOME/.android
         echo '### License policies' > $HOME/.android/repositories.cfg
 
-        # Escribir licencias oficiales de Android
+        # Aceptar licencias automáticas
         echo "24333f8a43b68257485db91320387e740938173d" > $ANDROID_HOME/licenses/android-sdk-license
         echo "84831b4009046f4a4fbef8215316f4fcb640a850" >> $ANDROID_HOME/licenses/android-sdk-license
         echo "d56f5187479451eabf01fb78af6dfcb131a648fa" >> $ANDROID_HOME/licenses/android-sdk-license
@@ -57,23 +57,33 @@ jobs:
         echo "33fb1f69ff094a97405e3264426569ec983276cd" >> $ANDROID_HOME/licenses/android-sdk-license
         echo "e66c8cd398e29a997ef2a709088661fc5f03d6d6" >> $ANDROID_HOME/licenses/android-sdk-license
 
-        # Descargar herramientas de línea de comandos de Android (Layout moderno)
+        # Descargar herramientas
         CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
         wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
         unzip -q cmdtools.zip -d temp_tools
+        
+        # 1. Estructura moderna (Recomendada por Google)
         mkdir -p $ANDROID_HOME/cmdline-tools/latest
         cp -r temp_tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+        
+        # 2. Estructura antigua (OBLIGATORIA para que Buildozer no falle)
+        mkdir -p $ANDROID_HOME/tools
+        cp -r temp_tools/cmdline-tools/* $ANDROID_HOME/tools/
+        
         rm -rf cmdtools.zip temp_tools
 
-        # Instalar componentes requeridos
+        # Verificar y dar permisos de ejecución explícitos
+        chmod +x $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
+        chmod +x $ANDROID_HOME/tools/bin/sdkmanager
+
+        # Instalar plataformas requeridas
         export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;31.0.0" || true
 
-    - name: Limpiar y compilar APK
+    - name: Compilar APK (Buildozer)
       working-directory: KHANIA
       run: |
-        buildozer android clean || true
         buildozer -v android debug
 
     - name: Subir APK como artefacto
