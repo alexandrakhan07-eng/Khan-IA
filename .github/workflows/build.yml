@@ -40,7 +40,7 @@ jobs:
     - name: Inyectar llave de Gemini de forma segura
       run: |
         mkdir -p KHANIA
-        echo '${{ secrets.GEMINI_API_KEY }}' > "KHANIA/llave"
+        echo '${{ secrets.GEMINI_API_KEY }}' > "KHANIA/llave.txt"
 
     - name: Instalar herramientas del Android SDK
       run: |
