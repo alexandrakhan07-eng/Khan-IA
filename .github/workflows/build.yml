@@ -21,7 +21,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Configurar Python (3.11)
+    - name: Configurar Python 3.11
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
@@ -37,8 +37,7 @@ jobs:
     - name: Instalar Buildozer y dependencias de Python
       run: |
         python -m pip install --upgrade pip "setuptools<70" wheel
-        pip install legacy-cgi==1.0 Cython==0.29.33 buildozer python-for-android
-        python -c "import legacy_cgi; print('legacy-cgi OK')"
+        pip install legacy-cgi Cython==0.29.33 buildozer python-for-android
 
     - name: Inyectar llave de Gemini de forma segura
       run: |
@@ -65,21 +64,19 @@ jobs:
         wget -q $CMDLINE_TOOLS_URL -O cmdtools.zip
         unzip -q cmdtools.zip -d temp_tools
         
-        # 1. Estructura moderna (Recomendada por Google)
+        # 1. Estructura moderna
         mkdir -p $ANDROID_HOME/cmdline-tools/latest
         cp -r temp_tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
         
-        # 2. Estructura antigua (OBLIGATORIA para que Buildozer no falle)
+        # 2. Estructura requerida por Buildozer
         mkdir -p $ANDROID_HOME/tools
         cp -r temp_tools/cmdline-tools/* $ANDROID_HOME/tools/
         
         rm -rf cmdtools.zip temp_tools
 
-        # Verificar y dar permisos de ejecución explícitos
         chmod +x $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
         chmod +x $ANDROID_HOME/tools/bin/sdkmanager
 
-        # Instalar plataformas requeridas
         export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;31.0.0" || true
